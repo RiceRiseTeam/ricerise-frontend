@@ -8,6 +8,7 @@ import type {ReGeocodeResult} from "@vuemap/amap-jsapi-types/plugins/Geocoder";
 const emit = defineEmits<{
     (e: "view-change", southWest: AMap.LngLat | undefined, northEast: AMap.LngLat | undefined): void
     (e: "right-click", pos: {lng: number; lat: number}): void
+    (e: "left-click"): void
 }>()
 const containerRef = ref<HTMLDivElement | null>(null);
 const map = shallowRef<AMap.Map | null>(null);
@@ -63,6 +64,10 @@ onMounted(async () => {
             lng: lnglat.lng,
             lat: lnglat.lat,
         })
+    })
+
+    map.value.on("click", (e: any) => {
+        emit("left-click")
     })
 })
 

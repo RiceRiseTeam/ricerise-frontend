@@ -16,6 +16,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@vuemap/amap-jsapi-types": "^0.0.18",
     "axios": "^1.20.0",
+    "motion-v": "^2.4.4",
     "tailwindcss": "^4.3.3",
     "vue": "^3.5.42",
     "vue-router": "^4.6.4"
