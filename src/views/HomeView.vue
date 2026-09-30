@@ -9,29 +9,25 @@ const mapComponentRef = ref<InstanceType<typeof MapComponent> | null> (null)
 const infoSidebarComponent = ref<InstanceType<typeof InfoSidebarComponent> | null>(null)
 const uploadSidebarComponent = ref<InstanceType<typeof UploadSidebarComponent> | null>(null)
 
-const uploadVisible = ref(false)
 const currentLnglat = ref<{lng: number; lat: number} | null>(null)
 const currentAddress = ref<string | null>(null)
+
 async function onMapRightClick(pos: {lng: number; lat: number}){
+    infoSidebarComponent.value?.sidebar?.close()
     uploadSidebarComponent.value?.sidebar?.open()
-    currentAddress.value = "[]loading..."
+    currentAddress.value = "- loading..."
     currentLnglat.value = pos
     const address = await mapComponentRef.value?.parseAddressAsync([pos.lng, pos.lat])
-    currentAddress.value = address ?? "[]获取地址失败!"
+    currentAddress.value = address ?? "- 获取地址失败!"
 }
 
 function onMapLeftClick(){
+    uploadSidebarComponent.value?.sidebar?.close()
     infoSidebarComponent.value?.sidebar?.open()
 }
 
 function onMapViewChange(southWest: AMap.LngLat | undefined, northEast: AMap.LngLat | undefined){
 
-}
-
-function onSidebarClose(){
-    uploadVisible.value = false
-    currentAddress.value = null
-    currentLnglat.value = null
 }
 
 

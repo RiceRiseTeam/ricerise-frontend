@@ -15,13 +15,17 @@ const emit = defineEmits<{
 const visible = ref(false)
 
 function close(){
-    visible.value = false
-    emit("on-close")
+    if (visible.value) {
+        visible.value = false
+        emit("on-close")
+    }
 }
 
 function open() {
-    visible.value = true
-    emit("on-open")
+    if (!visible.value) {
+        visible.value = true
+        emit("on-open")
+    }
 }
 
 defineExpose({
