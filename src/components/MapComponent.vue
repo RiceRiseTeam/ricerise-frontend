@@ -97,8 +97,27 @@ async function parseAddressAsync(lnglat: [number, number]){
     })
 }
 
+export interface MapPoint {
+  name: string
+  lnglat: AMap.LngLat
+}
+
+async function syncMarkers(points: MapPoint[]){
+    map.value?.remove(map.value?.getAllOverlays("marker"))
+    const markers = points.map(point => {
+        const marker = new AMap.Marker({
+            position: point.lnglat,
+            title: point.name
+        })
+        return marker
+    })
+
+    map.value?.add(markers)
+}
+
 defineExpose({
-    parseAddressAsync
+    parseAddressAsync,
+    syncMarkers
 })
 
 </script>

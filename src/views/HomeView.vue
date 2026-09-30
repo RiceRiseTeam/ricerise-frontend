@@ -1,9 +1,13 @@
 <script setup lang="ts">
 
-import MapComponent from "@/components/MapComponent.vue";
-import {ref} from "vue";
+import MapComponent, { type MapPoint } from "@/components/MapComponent.vue";
+import {onMounted, ref} from "vue";
 import InfoSidebarComponent from "@/components/InfoSidebarComponent.vue";
 import UploadSidebarComponent from "@/components/UploadSidebarComponent.vue";
+
+import NProgress from 'nprogress'
+import api from "@/api/http";
+import type { DtoLocationDto } from "@/api/api";
 
 const mapComponentRef = ref<InstanceType<typeof MapComponent> | null> (null)
 const infoSidebarComponent = ref<InstanceType<typeof InfoSidebarComponent> | null>(null)
@@ -26,9 +30,27 @@ function onMapLeftClick(){
     infoSidebarComponent.value?.sidebar?.open()
 }
 
-function onMapViewChange(southWest: AMap.LngLat | undefined, northEast: AMap.LngLat | undefined){
+async function onMapViewChange(southWest: AMap.LngLat | undefined, northEast: AMap.LngLat | undefined){
+    if (!southWest || !northEast) return
+    const locations = await api.map.locationViewCreate({max_lat: northEast.lat, max_lng: northEast.lng, min_lat: southWest.lat, min_lng: southWest.lng})
+    if (locations.data.code != 20000) {
+        return
+    }
+    const points: MapPoint[] = []
+    locations.data.data?.forEach((loc: DtoLocationDto) => {
+        if (!loc.name || !loc.longitude || !loc.latitude) return
+        points.push({
+            name: loc.name,
+            lnglat: AMap.LngLat.from([loc.longitude, loc.latitude])
+        })
+    })
 
+    await mapComponentRef.value?.syncMarkers(points)
 }
+
+onMounted(() => {
+    NProgress.done()
+})
 
 
 </script>

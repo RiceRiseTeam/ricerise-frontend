@@ -1,1 +1,7 @@
 html, body, #app { height: 100%; }
+
+#nprogress .spinner-icon {
+  background: url('/icon.ico') center/contain no-repeat;
+  width: 24px;
+  height: 24px;
+}
