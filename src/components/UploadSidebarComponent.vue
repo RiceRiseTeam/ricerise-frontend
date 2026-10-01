@@ -2,6 +2,7 @@
 
 import SidebarComponent from "@/components/SidebarComponent.vue";
 import {ref, watch} from "vue";
+import {useToast} from "@/composables/message.ts";
 
 const props = defineProps<{
     address: string | null
@@ -14,6 +15,7 @@ defineExpose({
 })
 
 const currentAddress = ref(props.address)
+const toast = useToast()
 
 watch(
         () => props.address,
@@ -21,6 +23,9 @@ watch(
             currentAddress.value = val
         }
 )
+function onClick(){
+    toast.success("你好")
+}
 
 </script>
 
@@ -42,7 +47,7 @@ watch(
         </div>
 
         <div class="flex items-center gap2 mt-auto">
-            <button class="rounded-lg w-100 border border-gray-200 px-3 py-2 outline-none focus:border-b-blue-300 hover:bg-blue-300 hover:text-white transition-colors">上传</button>
+            <button class="rounded-lg w-100 border border-gray-200 px-3 py-2 outline-none focus:border-b-blue-300 hover:bg-blue-300 hover:text-white transition-colors" @click="onClick">上传</button>
         </div>
     </SidebarComponent>
 </template>

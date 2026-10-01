@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { RouterView } from "vue-router"
+import {RouterView} from "vue-router"
+import MessageContainerComponent from "@/components/MessageContainerComponent.vue";
 </script>
 
 <template>
@@ -8,6 +9,7 @@ import { RouterView } from "vue-router"
             <component :is = "Component"></component>
         </Transition>
     </RouterView>
+    <MessageContainerComponent></MessageContainerComponent>
 </template>
 
 <style scoped>
