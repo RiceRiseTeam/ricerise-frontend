@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import {toTypedSchema} from "@vee-validate/zod";
 import {type UserLoginForm, userLoginSchema} from "@/schemas/userSchema.ts";
 import {ErrorMessage, Field, Form, useForm} from "vee-validate";
 import api from "@/api/http.ts";
@@ -11,7 +10,6 @@ import {onMounted, ref} from "vue";
 import NProgress from "nprogress";
 import { AlignLeft, LoaderCircle  } from '@respeak/lucide-motion-vue'
 
-const validationSchema = toTypedSchema(userLoginSchema);
 const toast = useToast()
 async function onSubmit(form: any){
     form = form as UserLoginForm
@@ -21,7 +19,7 @@ async function onSubmit(form: any){
             user_id: form.userId,
             password: form.password
         })
-        if (resp.status !==200 || resp.data?.code !== 20000){
+        if (resp.status !== 200 || resp.data?.code !== 0){
             isExpanded.value = false
             toast.error("登录失败: " + resp.data?.message)
             return
@@ -34,8 +32,6 @@ async function onSubmit(form: any){
         toast.error("登录失败: 服务器连接错误")
     }
 }
-const {handleSubmit} = useForm({validationSchema})
-
 const isExpanded = ref(false)
 
 onMounted(() => {
@@ -73,7 +69,7 @@ onMounted(() => {
                 </div>
             </Motion>
             <Form
-                :validation-schema="validationSchema"
+                :validation-schema="userLoginSchema"
                 @submit="onSubmit"
                 v-slot="{ meta }"
                 class="space-y-2 px-5 py-10"
@@ -88,7 +84,7 @@ onMounted(() => {
                             class="rounded-lg w-full border border-gray-200 px-3 py-2 outline-none focus:border-b-blue-300 transition-colors"
                             :class="{ 'border-red-500': meta.touched && !meta.valid }"
                     />
-                    <div class="min-h-7">
+                    <div class="min-h-6">
                         <ErrorMessage name="userId" class="px-3 py-2 text-sm text-red-600" />
                     </div>
                 </div>
@@ -101,7 +97,7 @@ onMounted(() => {
                             type="password"
                             class="rounded-lg w-full border border-gray-200 px-3 py-2 outline-none focus:border-b-blue-300 transition-colors"
                     />
-                    <div class="min-h-7">
+                    <div class="min-h-6">
                         <ErrorMessage name="password" class="px-3 py-2 text-sm text-red-600" />
                     </div>
                 </div>

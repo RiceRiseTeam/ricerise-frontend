@@ -8,6 +8,8 @@ import UploadSidebarComponent from "@/components/UploadSidebarComponent.vue";
 import NProgress from 'nprogress'
 import api from "@/api/http";
 import type { DtoLocationDto } from "@/api/api";
+import type {MapUploadForm} from "@/schemas/mapSchema.ts";
+import {useToast} from "@/composables/message.ts";
 
 const mapComponentRef = ref<InstanceType<typeof MapComponent> | null> (null)
 const infoSidebarComponent = ref<InstanceType<typeof InfoSidebarComponent> | null>(null)
@@ -15,6 +17,8 @@ const uploadSidebarComponent = ref<InstanceType<typeof UploadSidebarComponent> |
 
 const currentLnglat = ref<{lng: number; lat: number} | null>(null)
 const currentAddress = ref<string | null>(null)
+
+const toast = useToast()
 
 async function onMapRightClick(pos: {lng: number; lat: number}){
     infoSidebarComponent.value?.sidebar?.close()
@@ -26,14 +30,14 @@ async function onMapRightClick(pos: {lng: number; lat: number}){
 }
 
 function onMapLeftClick(){
-    uploadSidebarComponent.value?.sidebar?.close()
-    infoSidebarComponent.value?.sidebar?.open()
+
 }
 
 async function onMapViewChange(southWest: AMap.LngLat | undefined, northEast: AMap.LngLat | undefined){
     if (!southWest || !northEast) return
     const locations = await api.map.locationViewCreate({max_lat: northEast.lat, max_lng: northEast.lng, min_lat: southWest.lat, min_lng: southWest.lng})
-    if (locations.data.code != 20000) {
+    console.log(locations.data)
+    if (locations.data.code != 0) {
         return
     }
     const points: MapPoint[] = []
@@ -41,11 +45,40 @@ async function onMapViewChange(southWest: AMap.LngLat | undefined, northEast: AM
         if (!loc.name || !loc.longitude || !loc.latitude) return
         points.push({
             name: loc.name,
-            lnglat: AMap.LngLat.from([loc.longitude, loc.latitude])
+            lnglat: AMap.LngLat.from([loc.longitude, loc.latitude]),
+            onClick: () => {
+                uploadSidebarComponent.value?.sidebar?.close()
+                infoSidebarComponent.value?.open(loc)
+            }
         })
     })
 
     await mapComponentRef.value?.syncMarkers(points)
+}
+
+async function onUpload(form: MapUploadForm){
+    if (!currentLnglat.value){
+        toast.error("获取坐标点错误")
+        return
+    }
+    try{
+        const resp = await api.map.locationsCreate({
+            name: form.name,
+            address: form.address,
+            description: form.description,
+            latitude: currentLnglat.value?.lat ?? 0,
+            longitude: currentLnglat.value?.lng ?? 0
+        })
+        if (resp.data.code != 20000){
+            toast.error("上传失败: " + resp.data.message)
+            return
+        }
+
+        toast.success("上传成功!")
+        uploadSidebarComponent.value?.sidebar?.close()
+    }catch (e){
+        toast.error("上传失败: 服务器错误")
+    }
 }
 
 onMounted(() => {
@@ -64,7 +97,7 @@ onMounted(() => {
                 @view-change="onMapViewChange"
         />
         <InfoSidebarComponent ref="infoSidebarComponent"></InfoSidebarComponent>
-        <UploadSidebarComponent ref="uploadSidebarComponent" :address="currentAddress"></UploadSidebarComponent>
+        <UploadSidebarComponent ref="uploadSidebarComponent" @onSubmit="onUpload" :address="currentAddress"></UploadSidebarComponent>
     </div>
 </template>
 

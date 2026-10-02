@@ -98,8 +98,9 @@ async function parseAddressAsync(lnglat: [number, number]){
 }
 
 export interface MapPoint {
-  name: string
-  lnglat: AMap.LngLat
+    name: string
+    lnglat: AMap.LngLat
+    onClick: ()=> void
 }
 
 async function syncMarkers(points: MapPoint[]){
@@ -108,6 +109,9 @@ async function syncMarkers(points: MapPoint[]){
         const marker = new AMap.Marker({
             position: point.lnglat,
             title: point.name
+        })
+        marker.on("click", (e: any) => {
+            point.onClick()
         })
         return marker
     })

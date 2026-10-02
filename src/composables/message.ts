@@ -15,7 +15,6 @@ let startId = 0
 function addToast(type: ToastType, message: string, duration = 3000): number{
     const id = ++startId;
     toasts.value.push({id, duration, message, type})
-    console.log("add")
     if (duration > 0) {
         setTimeout(() => removeToast(id), duration)
     }
