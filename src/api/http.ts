@@ -8,8 +8,6 @@ const api = new Api({
     timeout: 10000
 })
 
-const toast = useToast()
-
 interface QueueItem {
     resolve: (value: any) => void;
     reject: (reason?: any) => void;
@@ -59,6 +57,7 @@ api.instance.interceptors.response.use(async (response) => {
             if (!window.location.pathname.startsWith("/login")) {
                 window.location.href = "/login";
             }
+            const toast = useToast()
             toast.warning("登录已过期")
             return Promise.reject(new Error("Refresh Token is invalid"))
         }
@@ -91,6 +90,7 @@ api.instance.interceptors.response.use(async (response) => {
             if (!window.location.pathname.startsWith("/login")) {
                 window.location.href = "/login";
             }
+            const toast = useToast()
             toast.error("服务器链接错误")
             return Promise.reject(e)
         }
