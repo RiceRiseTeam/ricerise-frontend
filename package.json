@@ -14,6 +14,7 @@
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",
     "@amap/amap-jsapi-types": "^0.0.15",
+    "@microsoft/fetch-event-source": "^2.0.1",
     "@respeak/lucide-motion-vue": "^0.7.0",
     "@tailwindcss/vite": "^4.3.3",
     "@vuemap/amap-jsapi-types": "^0.0.18",

@@ -2,6 +2,7 @@ import axios, {type AxiosInstance, type AxiosRequestConfig, type InternalAxiosRe
 import {tokenStorage} from "@/store/auth.ts";
 import { Api } from "./api";
 import {useToast} from "@/composables/message.ts";
+import {type Ref, ref, watch} from "vue";
 
 const api = new Api({
     timeout: 10000
@@ -15,7 +16,16 @@ interface QueueItem {
     config: AxiosRequestConfig;
 }
 
-let isRefreshing = false;
+const isRefreshing: Ref<boolean, boolean> = ref(false);
+export const waitRefresh = new Promise<void>((resolve) => {
+    const stop = watch(isRefreshing, (v) => {
+        if (v){
+            stop()
+            resolve()
+        }
+    }, {immediate: true})
+})
+
 let failedQueue: QueueItem[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
@@ -54,13 +64,13 @@ api.instance.interceptors.response.use(async (response) => {
         }
 
         config._retry = true
-        if (isRefreshing){
+        if (isRefreshing.value){
             return new Promise((resolve, reject) => {
                 failedQueue.push({resolve, reject, config})
             })
         }
 
-        isRefreshing = true
+        isRefreshing.value = true
 
         try{
             const resp = await api.auth.refreshCreate()

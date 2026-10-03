@@ -1,10 +1,21 @@
 <script setup lang="ts">
 
 import {AnimatePresence, Motion} from "motion-v";
-import {useToast} from "@/composables/message.ts";
+import {useSSE, useToast} from "@/composables/message.ts";
 import { Check, Bell, X } from '@respeak/lucide-motion-vue'
+import {onMounted} from "vue";
+import {fetchEventSource} from "@microsoft/fetch-event-source";
+import {tokenStorage} from "@/store/auth.ts";
 
 const { toasts, remove } = useToast()
+const sse = useSSE()
+
+onMounted(() => {
+    sse.init()
+    sse.on("notice", (data: any)=> {
+
+    })
+})
 </script>
 
 <template>
