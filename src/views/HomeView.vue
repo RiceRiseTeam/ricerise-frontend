@@ -10,6 +10,7 @@ import api from "@/api/http";
 import type { DtoLocationDto } from "@/api/api";
 import type {MapUploadForm} from "@/schemas/mapSchema.ts";
 import {useToast} from "@/composables/message.ts";
+import BottomNavbarComponent from "@/components/BottomNavbarComponent.vue";
 
 const mapComponentRef = ref<InstanceType<typeof MapComponent> | null> (null)
 const infoSidebarComponent = ref<InstanceType<typeof InfoSidebarComponent> | null>(null)
@@ -98,6 +99,7 @@ onMounted(() => {
         />
         <InfoSidebarComponent ref="infoSidebarComponent"></InfoSidebarComponent>
         <UploadSidebarComponent ref="uploadSidebarComponent" @onSubmit="onUpload" :address="currentAddress"></UploadSidebarComponent>
+        <BottomNavbarComponent></BottomNavbarComponent>
     </div>
 </template>
 
