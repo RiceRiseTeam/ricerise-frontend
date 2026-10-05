@@ -9,10 +9,11 @@ import {Motion} from "motion-v"
 import {onMounted, ref} from "vue";
 import NProgress from "nprogress";
 import { AlignLeft, LoaderCircle  } from '@respeak/lucide-motion-vue'
-import { useRouter } from "vue-router"
+import { useRouter, useRoute } from "vue-router"
 
 const toast = useToast()
 const router = useRouter()
+const route = useRoute()
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 async function onSubmit(form: any){
@@ -33,7 +34,10 @@ async function onSubmit(form: any){
         userStorage.setCurrentUser(resp.data?.data?.user)
         toast.success("登录成功")
         await sleep(500)
-        await router.replace({name: "home"})
+
+        const redirect = route.query.redirect
+        const raw = Array.isArray(redirect) ? redirect[0] : redirect
+        await router.replace(raw ?? "/")
     }catch (e){
         isExpanded.value = false
         toast.error("登录失败: 服务器连接错误")

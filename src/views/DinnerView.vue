@@ -51,6 +51,28 @@ async function refreshDinners(){
     }
 }
 
+async function generateInviteCode(dinnerId: number) {
+    try{
+        const resp = await api.dinners.idCodeList(dinnerId)
+        if (resp.data.code !== 0){
+            toast.error("生成邀请链接失败: " + resp.data.message)
+            return
+        }
+
+        const { href } = router.resolve({name: "invite", query: {id: dinnerId, code: resp.data.data.code}})
+        const inviteUrl = new URL(href, window.location.origin).href
+
+        try {
+            await navigator.clipboard.writeText(inviteUrl)
+            toast.success("邀请链接已经复制到剪贴板")
+        } catch (err) {
+            toast.error("邀请链接复制失败")
+        }
+    }catch (e){
+        toast.error("生成邀请链接失败: 服务器错误")
+    }
+}
+
 onMounted(async () => {
     NProgress.done()
     await refreshDinners()
@@ -61,6 +83,11 @@ onMounted(async () => {
     <div class="relative h-full w-full">
         <div class="h-full w-full flex">
         <div class="flex flex-col w-1/3 bg-white shadow-2xl border border-gray-200 items-center space-y-1 px-2 py-2 z-99">
+            <div class="flex">
+                <CookingPot animate></CookingPot>
+                <span class="text-2xl font-bold">饭局列表</span>
+            </div>
+            <span class="text-sm text-gray-500 translate-y--2">{{ currentDinners.length }} 餐待完成</span>
             <AnimatePresence>
                 <Motion
                     v-for="dinner in currentDinners"
@@ -70,7 +97,7 @@ onMounted(async () => {
                     :animate="{ opacity: 1, x: 0, scale: 1 }"
                     :exit="{ opacity: 0, x: 50, scale: 0.9 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
-                    class="flex flex-col w-full bg-white rounded-2xl px-4 py-3 shadow-lg space-y-1 transition-colors transition-transform"
+                    class="flex flex-col w-full bg-white rounded-2xl px-4 py-3 shadow-lg space-y-1 transition-transform"
                     :class="[(dinner.id === selectedId) ? 'scale-103 z-99 translate-x-2' : 'bg-white']"
                     @click="() => selectedId = dinner.id ?? 0"
                 >
@@ -86,7 +113,7 @@ onMounted(async () => {
                         <span v-if="dinner.status === 4" class="my-auto ml-auto px-5 text-lg text-gray-500">已取消</span>
                     </div>
                     <hr class="text-gray-300 mt-1">
-                    <span class="text-sm">开始于:</span>
+                    <span class="text-sm">开始于: {{ dinner.meet_time }}</span>
                     <span class="text-sm">发起者: {{ dinner.host?.nickname }}</span>
 
                     <div class="flex">
@@ -99,25 +126,25 @@ onMounted(async () => {
                     </div>
 
                     <div class="flex my-1 space-x-2">
-                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,2)" class="flex inline-flex items-center justify-center flex-1 bg-blue-400 h-10 rounded-lg text-white shadow border-gray-50" v-if="(dinner.status ?? 0)<= 1">
+                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,2)" class="inline-flex items-center justify-center flex-1 bg-blue-400 h-10 rounded-lg text-white shadow border-gray-50" v-if="(dinner.status ?? 0)<= 1">
                             <AnimateIcon animateOnHover triggerTarget="parent">
                                 <CookingPot :size="20"/>
                             </AnimateIcon>
                             开始
                         </button>
-                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,4)" class="flex inline-flex items-center justify-center flex-1 bg-white h-10 rounded-lg shadow border-gray-50" v-if="(dinner.status ?? 0) <= 1">
+                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,4)" class="inline-flex items-center justify-center flex-1 bg-white h-10 rounded-lg shadow border-gray-50" v-if="(dinner.status ?? 0) <= 1">
                             <AnimateIcon animateOnHover triggerTarget="parent">
                                 <X :size="20"/>
                             </AnimateIcon>
                             取消
                         </button>
-                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,3)" class="flex inline-flex items-center justify-center flex-1 bg-red-400 h-10 rounded-lg text-white shadow border-gray-50" v-if="(dinner.status ?? 0) === 2">
+                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,3)" class="inline-flex items-center justify-center flex-1 bg-red-400 h-10 rounded-lg text-white shadow border-gray-50" v-if="(dinner.status ?? 0) === 2">
                             <AnimateIcon animateOnHover triggerTarget="parent">
                                 <X :size="20"/>
                             </AnimateIcon>
                             结束
                         </button>
-                        <button class="flex inline-flex items-center justify-center flex-1 bg-white h-10 rounded-lg shadow border-gray-50" v-if="(dinner.status ?? 0 ) <= 1">
+                        <button @click="async () => await generateInviteCode(dinner.id ?? 0)" class="inline-flex items-center justify-center flex-1 bg-white h-10 rounded-lg shadow border-gray-50" v-if="(dinner.status ?? 0 ) <= 1">
                             <AnimateIcon animateOnHover triggerTarget="parent">
                                 <MessageSquareShare :size="20"/>
                             </AnimateIcon>

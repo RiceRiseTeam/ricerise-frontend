@@ -27,6 +27,12 @@ const routes = [
         meta: { guestOnly: true }
     },
     {
+        path: "/invite",
+        name: "invite",
+        component: () => import("@/views/InviteView.vue"),
+        meta: { requiresAuth: true }
+    },
+    {
         path: "/dinner",
         name: "dinner",
         component: () => import("@/views/DinnerView.vue"),
