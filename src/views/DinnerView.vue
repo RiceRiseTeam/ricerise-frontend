@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import {onMounted, type Ref, ref} from "vue"
+import {nextTick, onMounted, type Ref, ref, watch} from "vue"
 import NProgress from 'nprogress'
 import {AnimatePresence, Motion} from "motion-v";
 import api from "@/api/http.ts";
-import {useToast} from "@/composables/message.ts";
-import type {DtoDinnerDto} from "@/api/api";
+import {useSSE, useToast} from "@/composables/message.ts";
+import type {DtoDinnerDto, DtoUserDto} from "@/api/api";
 import { AnimateIcon,CookingPot ,MessageSquareShare, MapPin, X } from '@respeak/lucide-motion-vue'
 import {useRouter} from "vue-router"
+import {userStorage} from "@/store/auth.ts";
 
 interface ChatMessage {
     userid: number
@@ -16,9 +17,39 @@ interface ChatMessage {
 
 const toast = useToast()
 const router = useRouter()
+const sse = useSSE()
+
+sse.on("chat", (data: any) => {
+    console.log(data)
+    const user = data.user as DtoUserDto
+    const dinnerId = data.dinnerId ?? selectedId.value ?? 0
+
+    if(!messages.value.has(dinnerId)){
+        messages.value.set(dinnerId, [])
+    }
+
+    messages.value.get(dinnerId)?.push({
+        userid: user?.id ?? 0,
+        username: user?.nickname ?? "",
+        message: data.message
+    })
+})
+
 const currentDinners: Ref<DtoDinnerDto[]> = ref([])
 const selectedId: Ref<number | null> = ref(null)
 const messages: Ref<Map<number, ChatMessage[]>> = ref(new Map())
+const messageInput = ref("");
+const scrollRef: Ref<HTMLDivElement | null> = ref(null)
+
+async function scrollToBottom() {
+    await nextTick()
+    const el = scrollRef.value
+    if (el) el.scrollTop = el.scrollHeight
+}
+
+watch(selectedId, scrollToBottom)
+watch(messages, scrollToBottom, {deep: true})
+
 
 async function onUpdateStatus(id: number ,status: 2 | 3 | 4){
     try {
@@ -73,9 +104,32 @@ async function generateInviteCode(dinnerId: number) {
     }
 }
 
+async function sendMessage(){
+    try{
+        const resp = await api.dinners.idMessagesCreate(selectedId.value ?? 0, {
+            message: messageInput.value
+        })
+        if(!messages.value.has(selectedId.value ?? 0)){
+            messages.value.set(selectedId.value ?? 0, [])
+        }
+
+        const user = userStorage.getCurrentUser()
+        if (!user){
+            return
+        }
+
+        messageInput.value = ""
+    }catch (e){
+
+    }
+}
+
 onMounted(async () => {
     NProgress.done()
     await refreshDinners()
+    if (currentDinners.value.length > 0){
+        selectedId.value = currentDinners.value[0]?.id ?? 0
+    }
 })
 </script>
 
@@ -156,8 +210,24 @@ onMounted(async () => {
             <span v-if="currentDinners.length === 0" class="text-sm text-gray-500 my-auto" >当前暂无饭局...</span>
         </div>
         <div class="flex-1 bg-blue-50 relative">
+            <div ref="scrollRef" class="flex flex-col px-4 py-2 space-y-2 overflow-y-auto h-full pb-20" v-if="messages.get(selectedId ?? 0)">
+                <AnimatePresence>
+                    <Motion
+                        v-for="(message, index) in messages.get(selectedId ?? 0)"
+                        :key="`${message.userid}-${index}`"
+                        :initial="{ y: 20, opacity: 0 }"
+                        :animate="{ y: 0, opacity: 1 }"
+                        :transition="{ duration: 0.2 }"
+                        class="bg-white/85 w-1/3 flex flex-col rounded-lg shadow px-2 py-2"
+                        :class="[message.userid === userStorage.getCurrentUser()?.id ? 'ml-auto' : 'mr-auto']"
+                    >
+                        <span class="text-sm text-blue-400">{{message.username}}</span>
+                        <span>{{message.message}}</span>
+                    </Motion>
+                </AnimatePresence>
+            </div>
             <div class="absolute h-15 w-150 bottom-3 left-1/2 -translate-x-1/2 bg-white/85 backdrop-blur-sm rounded-4xl overflow-hidden shadow-2xl flex items-center px-4">
-                <input class="flex-1 outline-none" placeholder="和大家打个招呼吧">
+                <input @keydown.enter="sendMessage" v-model="messageInput" class="flex-1 outline-none" placeholder="和大家打个招呼吧">
             </div>
         </div>
     </div>
