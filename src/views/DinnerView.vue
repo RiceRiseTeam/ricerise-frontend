@@ -5,7 +5,8 @@ import {AnimatePresence, Motion} from "motion-v";
 import api from "@/api/http.ts";
 import {useToast} from "@/composables/message.ts";
 import type {DtoDinnerDto} from "@/api/api";
-import { AnimateIcon,CookingPot ,MessageSquareShare, Bell, X } from '@respeak/lucide-motion-vue'
+import { AnimateIcon,CookingPot ,MessageSquareShare, MapPin, X } from '@respeak/lucide-motion-vue'
+import {useRouter} from "vue-router"
 
 interface ChatMessage {
     userid: number
@@ -14,6 +15,7 @@ interface ChatMessage {
 }
 
 const toast = useToast()
+const router = useRouter()
 const currentDinners: Ref<DtoDinnerDto[]> = ref([])
 const selectedId: Ref<number | null> = ref(null)
 const messages: Ref<Map<number, ChatMessage[]>> = ref(new Map())
@@ -56,7 +58,8 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="h-full w-full flex">
+    <div class="relative h-full w-full">
+        <div class="h-full w-full flex">
         <div class="flex flex-col w-150 bg-white shadow-2xl border-gray-50 items-center space-y-1 px-1 py-1">
             <AnimatePresence>
                 <Motion
@@ -130,5 +133,12 @@ onMounted(async () => {
                 <input class="flex-1 outline-none" placeholder="和大家打个招呼吧">
             </div>
         </div>
+    </div>
+    <button @click="async () => await router.replace({name: 'home'})" class="absolute right-2 top-2 flex flex-col items-center justify-center rounded-full bg-blue-400 h-15 w-15 shadow hover:brightness-90 transition-colors backdrop-blur-sm">
+        <AnimateIcon animateOnHover triggerTarget="parent">
+            <MapPin class="text-white text-shadow" :size="24"/>
+            <span class="text-white text-xs">地图</span>
+        </AnimateIcon>
+    </button>
     </div>
 </template>

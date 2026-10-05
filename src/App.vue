@@ -4,9 +4,9 @@ import MessageContainerComponent from "@/components/MessageContainerComponent.vu
 </script>
 
 <template>
-    <RouterView v-slot = "{ Component }">
+    <RouterView v-slot = "{ Component, route }">
         <Transition mode="out-in">
-            <component :is = "Component"></component>
+            <component :is = "Component" :key="route.fullPath"></component>
         </Transition>
     </RouterView>
     <MessageContainerComponent></MessageContainerComponent>

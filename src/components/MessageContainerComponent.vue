@@ -7,13 +7,13 @@ import {onMounted} from "vue";
 import {fetchEventSource} from "@microsoft/fetch-event-source";
 import {tokenStorage} from "@/store/auth.ts";
 
-const { toasts, remove } = useToast()
+const { toasts, remove, info } = useToast()
 const sse = useSSE()
 
 onMounted(() => {
     sse.init()
-    sse.on("notice", (data: any)=> {
-
+    sse.on("toast", (data: any)=> {
+        info(data.message)
     })
 })
 </script>

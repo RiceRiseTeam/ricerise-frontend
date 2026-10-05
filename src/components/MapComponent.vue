@@ -69,6 +69,8 @@ onMounted(async () => {
     map.value.on("click", (e: any) => {
         emit("left-click")
     })
+
+    emit("view-change", map.value?.getBounds()?.southWest, map.value?.getBounds()?.northEast)
 })
 
 onUnmounted(() => {

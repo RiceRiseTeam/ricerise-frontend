@@ -13,6 +13,8 @@ import {useToast} from "@/composables/message.ts";
 import BottomNavbarComponent from "@/components/BottomNavbarComponent.vue";
 import CreateSidebarComponent from "@/components/CreateSidebarComponent.vue";
 import {userStorage} from "@/store/auth";
+import {AnimateIcon, MapPin} from "@respeak/lucide-motion-vue";
+import {useRouter} from "vue-router";
 
 const mapComponentRef = ref<InstanceType<typeof MapComponent> | null> (null)
 const infoSidebarComponent = ref<InstanceType<typeof InfoSidebarComponent> | null>(null)
@@ -22,6 +24,7 @@ const createSidebarComponent = ref<InstanceType<typeof CreateSidebarComponent> |
 const currentLnglat = ref<{lng: number; lat: number} | null>(null)
 const currentAddress = ref<string | null>(null)
 
+const router = useRouter()
 const toast = useToast()
 
 async function onMapRightClick(pos: {lng: number; lat: number}){
@@ -98,17 +101,25 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="h-full">
-        <MapComponent
-                ref="mapComponentRef"
-                @right-click="onMapRightClick"
-                @left-click="onMapLeftClick"
-                @view-change="onMapViewChange"
-        />
-        <InfoSidebarComponent ref="infoSidebarComponent" @on-create="onCreateDinner"></InfoSidebarComponent>
-        <UploadSidebarComponent ref="uploadSidebarComponent" @onSubmit="onUpload" :address="currentAddress"></UploadSidebarComponent>
-        <BottomNavbarComponent></BottomNavbarComponent>
-        <CreateSidebarComponent ref="createSidebarComponent"></CreateSidebarComponent>
+    <div class="relative h-full w-full">
+        <div class="h-full">
+            <MapComponent
+                    ref="mapComponentRef"
+                    @right-click="onMapRightClick"
+                    @left-click="onMapLeftClick"
+                    @view-change="onMapViewChange"
+            />
+            <InfoSidebarComponent ref="infoSidebarComponent" @on-create="onCreateDinner"></InfoSidebarComponent>
+            <UploadSidebarComponent ref="uploadSidebarComponent" @onSubmit="onUpload" :address="currentAddress"></UploadSidebarComponent>
+            <BottomNavbarComponent></BottomNavbarComponent>
+            <CreateSidebarComponent ref="createSidebarComponent"></CreateSidebarComponent>
+        </div>
+        <button @click="async () => await router.replace({name: 'dinner'})" class="absolute right-2 top-2 flex flex-col items-center justify-center rounded-full bg-blue-400 h-15 w-15 shadow hover:brightness-90 transition-colors backdrop-blur-sm">
+            <AnimateIcon animateOnHover triggerTarget="parent">
+                <MapPin class="text-white text-shadow" :size="24"/>
+                <span class="text-white text-xs">饭局</span>
+            </AnimateIcon>
+        </button>
     </div>
 </template>
 

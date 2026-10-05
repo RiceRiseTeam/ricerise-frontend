@@ -33,7 +33,7 @@ async function onSubmit(form: any){
         userStorage.setCurrentUser(resp.data?.data?.user)
         toast.success("登录成功")
         await sleep(500)
-        router.replace({name: "home"})
+        await router.replace({name: "home"})
     }catch (e){
         isExpanded.value = false
         toast.error("登录失败: 服务器连接错误")
