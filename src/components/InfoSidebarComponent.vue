@@ -7,6 +7,10 @@ import api from "@/api/http.ts";
 import {AnimatePresence, Motion} from "motion-v";
 import {useToast} from "@/composables/message.ts";
 
+const emit = defineEmits<{
+    (e: "on-create" ,loc: DtoLocationDto): void
+}>()
+
 const sidebar = ref<InstanceType<typeof SidebarComponent> | null>(null)
 const toast = useToast()
 
@@ -27,6 +31,12 @@ async function open(loc: DtoLocationDto){
         currentComments.value.push(...resp.data.data)
     }catch (e){
         toast.error("加载评论失败: 服务器错误")
+    }
+}
+
+function onCreate(){
+    if (currentLocation.value) {
+        emit("on-create", currentLocation.value)
     }
 }
 
@@ -66,7 +76,7 @@ defineExpose({
                 <p class="text-gray-500 text-sm" v-if="currentComments.length === 0"> 暂无评论数据...</p>
             </div>
 
-            <button class="rounded-lg w-full border border-gray-200 px-3 py-2 outline-none focus:border-b-blue-400 hover:bg-blue-400 hover:text-white transition-colors">创建饭局</button>
+            <button class="rounded-lg w-full border border-gray-200 px-3 py-2 outline-none focus:border-b-blue-400 hover:bg-blue-400 hover:text-white transition-colors" @click="onCreate">创建饭局</button>
             <hr class="border-gray-500 mt-auto">
             <span class="text-sm text-gray-500 mt-auto">收录于: {{ currentLocation?.createdAt }}</span>
         </div>

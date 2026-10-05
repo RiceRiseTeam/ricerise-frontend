@@ -11,10 +11,13 @@ import type { DtoLocationDto } from "@/api/api";
 import type {MapUploadForm} from "@/schemas/mapSchema.ts";
 import {useToast} from "@/composables/message.ts";
 import BottomNavbarComponent from "@/components/BottomNavbarComponent.vue";
+import CreateSidebarComponent from "@/components/CreateSidebarComponent.vue";
+import {userStorage} from "@/store/auth";
 
 const mapComponentRef = ref<InstanceType<typeof MapComponent> | null> (null)
 const infoSidebarComponent = ref<InstanceType<typeof InfoSidebarComponent> | null>(null)
 const uploadSidebarComponent = ref<InstanceType<typeof UploadSidebarComponent> | null>(null)
+const createSidebarComponent = ref<InstanceType<typeof CreateSidebarComponent> | null>(null)
 
 const currentLnglat = ref<{lng: number; lat: number} | null>(null)
 const currentAddress = ref<string | null>(null)
@@ -82,6 +85,11 @@ async function onUpload(form: MapUploadForm){
     }
 }
 
+function onCreateDinner(loc: DtoLocationDto){
+    infoSidebarComponent.value?.sidebar?.close()
+    createSidebarComponent.value?.open(loc)
+}
+
 onMounted(() => {
     NProgress.done()
 })
@@ -97,9 +105,10 @@ onMounted(() => {
                 @left-click="onMapLeftClick"
                 @view-change="onMapViewChange"
         />
-        <InfoSidebarComponent ref="infoSidebarComponent"></InfoSidebarComponent>
+        <InfoSidebarComponent ref="infoSidebarComponent" @on-create="onCreateDinner"></InfoSidebarComponent>
         <UploadSidebarComponent ref="uploadSidebarComponent" @onSubmit="onUpload" :address="currentAddress"></UploadSidebarComponent>
         <BottomNavbarComponent></BottomNavbarComponent>
+        <CreateSidebarComponent ref="createSidebarComponent"></CreateSidebarComponent>
     </div>
 </template>
 

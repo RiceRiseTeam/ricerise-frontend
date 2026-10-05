@@ -18,6 +18,7 @@
     "@respeak/lucide-motion-vue": "^0.7.0",
     "@tailwindcss/vite": "^4.3.3",
     "@vuemap/amap-jsapi-types": "^0.0.18",
+    "@vuepic/vue-datepicker": "^14.0.0",
     "axios": "^1.20.0",
     "motion-v": "^2.4.4",
     "nprogress": "^0.2.0",

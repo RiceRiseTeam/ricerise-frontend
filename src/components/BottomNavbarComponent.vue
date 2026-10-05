@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {AnimatePresence, Motion} from "motion-v";
-import {computed, nextTick, type Ref, ref} from "vue";
+import {computed, nextTick, onMounted, type Ref, ref} from "vue";
+import {userStorage} from "@/store/auth";
+import {RouterLink} from "vue-router"
 
 interface Command {
     name: string
@@ -38,6 +40,8 @@ const commandKeyword = computed(() => {
     return match ? match[1] : null
 })
 
+const isLogin = ref(false)
+
 const filteredCommands = computed(() => {
     if (commandKeyword.value === null) return []
     const kw = commandKeyword.value?.toLowerCase()
@@ -65,6 +69,10 @@ async function selectCommand(command: Command) {
     await nextTick()
     textareaRef.value?.focus()
 }
+
+onMounted(() => {
+    isLogin.value = userStorage.getCurrentUser() !== null
+})
 </script>
 
 <template>
@@ -113,12 +121,17 @@ async function selectCommand(command: Command) {
 
         <nav class="flex items-center fixed border-none shadow-2xl w-175 min-h-15 bottom-5 left-1/2 -translate-x-1/2 bg-white/85 backdrop-blur-sm rounded-4xl overflow-hidden px-5 py-2 space-x-2">
             <img
+                v-if="isLogin"
                 class="h-10 w-10 rounded-full object-cover"
                 src="/icon.ico" alt="t"
             />
-            <div class="flex flex-col">
-                <span >吃白饭</span>
-                <span class="text-sm text-gray-500">@吃白饭的蓝色大肥鱼</span>
+            <div v-if="isLogin" class="flex flex-col">
+                <span >{{ userStorage.getCurrentUser()?.nickname }}</span>
+                <span class="text-sm text-gray-500">@ {{ userStorage.getCurrentUser()?.username }}</span>
+            </div>
+            <div v-if="!isLogin">
+                <RouterLink to="/login">登录</RouterLink>
+                <RouterLink to="/register">注册</RouterLink>
             </div>
             <hr class="h-6 w-px border-0 bg-gray-300">
 
