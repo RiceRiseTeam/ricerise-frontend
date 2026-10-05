@@ -8,8 +8,10 @@ import {onMounted} from "vue";
 import NProgress from "nprogress";
 import api from "@/api/http.ts";
 import {useToast} from "@/composables/message.ts";
+import { useRouter } from "vue-router"
 
 const toast = useToast()
+const router = useRouter()
 
 async function onSubmit(form: any){
     form = form as UserRegisterForm
@@ -27,6 +29,7 @@ async function onSubmit(form: any){
         }
 
         toast.success("注册成功! 正在跳转")
+        router.replace({name: "login"})
     }catch (e){
         toast.error("注册失败: 服务器错误")
     }

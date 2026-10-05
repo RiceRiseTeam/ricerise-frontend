@@ -4,13 +4,17 @@ import {type UserLoginForm, userLoginSchema} from "@/schemas/userSchema.ts";
 import {ErrorMessage, Field, Form, useForm} from "vee-validate";
 import api from "@/api/http.ts";
 import {useToast} from "@/composables/message.ts";
-import {tokenStorage} from "@/store/auth.ts";
+import {tokenStorage, userStorage} from "@/store/auth.ts";
 import {Motion} from "motion-v"
 import {onMounted, ref} from "vue";
 import NProgress from "nprogress";
 import { AlignLeft, LoaderCircle  } from '@respeak/lucide-motion-vue'
+import { useRouter } from "vue-router"
 
 const toast = useToast()
+const router = useRouter()
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
 async function onSubmit(form: any){
     form = form as UserLoginForm
     isExpanded.value = true
@@ -26,7 +30,10 @@ async function onSubmit(form: any){
         }
         const token = resp.data?.data?.access_token ?? ""
         tokenStorage.setAccessToken(token)
+        userStorage.setCurrentUser(resp.data?.data?.user)
         toast.success("登录成功")
+        await sleep(500)
+        router.replace({name: "home"})
     }catch (e){
         isExpanded.value = false
         toast.error("登录失败: 服务器连接错误")
