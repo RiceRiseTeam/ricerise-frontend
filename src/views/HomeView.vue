@@ -13,7 +13,7 @@ import {useToast} from "@/composables/message.ts";
 import BottomNavbarComponent from "@/components/BottomNavbarComponent.vue";
 import CreateSidebarComponent from "@/components/CreateSidebarComponent.vue";
 import {userStorage} from "@/store/auth";
-import {AnimateIcon, MapPin} from "@respeak/lucide-motion-vue";
+import {AnimateIcon, CookingPot} from "@respeak/lucide-motion-vue";
 import {useRouter} from "vue-router";
 
 const mapComponentRef = ref<InstanceType<typeof MapComponent> | null> (null)
@@ -93,8 +93,17 @@ function onCreateDinner(loc: DtoLocationDto){
     createSidebarComponent.value?.open(loc)
 }
 
-onMounted(() => {
+onMounted(async() => {
     NProgress.done()
+    try {
+        const resp = await api.user.getUser()
+        if (resp.data.code === 0){
+            console.log(resp.data.data)
+            userStorage.setCurrentUser(resp.data.data)
+        }
+    }catch (e){
+
+    }
 })
 
 
@@ -114,10 +123,10 @@ onMounted(() => {
             <BottomNavbarComponent></BottomNavbarComponent>
             <CreateSidebarComponent ref="createSidebarComponent"></CreateSidebarComponent>
         </div>
-        <button @click="async () => await router.replace({name: 'dinner'})" class="absolute right-2 top-2 flex flex-col items-center justify-center rounded-full bg-blue-400 h-15 w-15 shadow hover:brightness-90 transition-colors backdrop-blur-sm">
+        <button @click="async () => await router.replace({name: 'dinner'})" class="absolute right-4 top-4 flex flex-col items-center justify-center rounded-full bg-white/85 h-15 w-15 shadow hover:bg-blue-400 transition-colors backdrop-blur-sm hover:text-white">
             <AnimateIcon animateOnHover triggerTarget="parent">
-                <MapPin class="text-white text-shadow" :size="24"/>
-                <span class="text-white text-xs">饭局</span>
+                <CookingPot class="text-shadow" :size="24"/>
+                <span class="text-xs">饭局</span>
             </AnimateIcon>
         </button>
     </div>

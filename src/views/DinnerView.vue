@@ -60,7 +60,7 @@ onMounted(async () => {
 <template>
     <div class="relative h-full w-full">
         <div class="h-full w-full flex">
-        <div class="flex flex-col w-150 bg-white shadow-2xl border-gray-50 items-center space-y-1 px-1 py-1">
+        <div class="flex flex-col w-1/3 bg-white shadow-2xl border border-gray-200 items-center space-y-1 px-2 py-2 z-99">
             <AnimatePresence>
                 <Motion
                     v-for="dinner in currentDinners"
@@ -70,8 +70,8 @@ onMounted(async () => {
                     :animate="{ opacity: 1, x: 0, scale: 1 }"
                     :exit="{ opacity: 0, x: 50, scale: 0.9 }"
                     :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
-                    class="flex flex-col w-full rounded-2xl px-4 py-3 shadow-lg space-y-1 transition-colors"
-                    :class="[(dinner.id === selectedId) ? 'bg-blue-100  ' : 'bg-white']"
+                    class="flex flex-col w-full bg-white rounded-2xl px-4 py-3 shadow-lg space-y-1 transition-colors transition-transform"
+                    :class="[(dinner.id === selectedId) ? 'scale-103 z-99 translate-x-2' : 'bg-white']"
                     @click="() => selectedId = dinner.id ?? 0"
                 >
                     <div class="flex">
@@ -99,25 +99,25 @@ onMounted(async () => {
                     </div>
 
                     <div class="flex my-1 space-x-2">
-                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,2)" class="flex inline-flex items-center justify-center flex-1 bg-blue-400 h-10 rounded-lg text-white shadow border-gray-50" v-if="dinner.status <= 1">
+                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,2)" class="flex inline-flex items-center justify-center flex-1 bg-blue-400 h-10 rounded-lg text-white shadow border-gray-50" v-if="(dinner.status ?? 0)<= 1">
                             <AnimateIcon animateOnHover triggerTarget="parent">
                                 <CookingPot :size="20"/>
                             </AnimateIcon>
                             开始
                         </button>
-                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,4)" class="flex inline-flex items-center justify-center flex-1 bg-white h-10 rounded-lg shadow border-gray-50" v-if="dinner.status <= 1">
+                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,4)" class="flex inline-flex items-center justify-center flex-1 bg-white h-10 rounded-lg shadow border-gray-50" v-if="(dinner.status ?? 0) <= 1">
                             <AnimateIcon animateOnHover triggerTarget="parent">
                                 <X :size="20"/>
                             </AnimateIcon>
                             取消
                         </button>
-                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,3)" class="flex inline-flex items-center justify-center flex-1 bg-red-400 h-10 rounded-lg text-white shadow border-gray-50" v-if="dinner.status === 2">
+                        <button @click="async () => await onUpdateStatus(dinner.id ?? 0,3)" class="flex inline-flex items-center justify-center flex-1 bg-red-400 h-10 rounded-lg text-white shadow border-gray-50" v-if="(dinner.status ?? 0) === 2">
                             <AnimateIcon animateOnHover triggerTarget="parent">
                                 <X :size="20"/>
                             </AnimateIcon>
                             结束
                         </button>
-                        <button class="flex inline-flex items-center justify-center flex-1 bg-white h-10 rounded-lg shadow border-gray-50" v-if="dinner.status <= 1">
+                        <button class="flex inline-flex items-center justify-center flex-1 bg-white h-10 rounded-lg shadow border-gray-50" v-if="(dinner.status ?? 0 ) <= 1">
                             <AnimateIcon animateOnHover triggerTarget="parent">
                                 <MessageSquareShare :size="20"/>
                             </AnimateIcon>
@@ -134,10 +134,10 @@ onMounted(async () => {
             </div>
         </div>
     </div>
-    <button @click="async () => await router.replace({name: 'home'})" class="absolute right-2 top-2 flex flex-col items-center justify-center rounded-full bg-blue-400 h-15 w-15 shadow hover:brightness-90 transition-colors backdrop-blur-sm">
+    <button @click="async () => await router.replace({name: 'home'})" class="absolute right-4 top-4 flex flex-col items-center justify-center rounded-full bg-white/85 h-15 w-15 shadow hover:bg-blue-400 hover:text-white transition-colors backdrop-blur-sm">
         <AnimateIcon animateOnHover triggerTarget="parent">
-            <MapPin class="text-white text-shadow" :size="24"/>
-            <span class="text-white text-xs">地图</span>
+            <MapPin class="text-shadow" :size="24"/>
+            <span class="text-xs">地图</span>
         </AnimateIcon>
     </button>
     </div>
