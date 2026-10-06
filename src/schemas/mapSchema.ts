@@ -10,4 +10,10 @@ export const mapUploadSchema = z.object({
         .max(1024,"描述过长 (>1024)")
 })
 
+export const mapCommentSchema = z.object({
+    rank: z.int("请打分").min(1).max(5),
+    content: z.string("请输入评价内容").min(2).max(1024)
+})
+
 export type MapUploadForm = z.infer<typeof mapUploadSchema>;
+export type MapCommentSchema = z.infer<typeof mapCommentSchema>

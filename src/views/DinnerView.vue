@@ -40,6 +40,7 @@ const selectedId: Ref<number | null> = ref(null)
 const messages: Ref<Map<number, ChatMessage[]>> = ref(new Map())
 const messageInput = ref("");
 const scrollRef: Ref<HTMLDivElement | null> = ref(null)
+const showCommentWindow = ref(false)
 
 async function scrollToBottom() {
     await nextTick()
@@ -237,5 +238,12 @@ onMounted(async () => {
             <span class="text-xs">地图</span>
         </AnimateIcon>
     </button>
+
+    <div>
+        
+    </div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/4 h-2/3 flex flex-col bg-white shadow-2xl border border-gray-200 rounded-2xl px-4 py-4">
+        <span class="text-lg font-bold">提交评论</span>
+    </div>
     </div>
 </template>
