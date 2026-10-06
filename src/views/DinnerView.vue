@@ -5,9 +5,11 @@ import {AnimatePresence, Motion} from "motion-v";
 import api from "@/api/http.ts";
 import {useSSE, useToast} from "@/composables/message.ts";
 import type {DtoDinnerDto, DtoUserDto} from "@/api/api";
-import { AnimateIcon,CookingPot ,MessageSquareShare, MapPin, X } from '@respeak/lucide-motion-vue'
+import { AnimateIcon,CookingPot ,MessageSquareShare, MapPin, Star, X } from '@respeak/lucide-motion-vue'
 import {useRouter} from "vue-router"
 import {userStorage} from "@/store/auth.ts";
+import {ErrorMessage, Field, Form} from "vee-validate";
+import {mapCommentSchema, type MapCommentForm} from "@/schemas/mapSchema.ts";
 
 interface ChatMessage {
     userid: number
@@ -41,6 +43,7 @@ const messages: Ref<Map<number, ChatMessage[]>> = ref(new Map())
 const messageInput = ref("");
 const scrollRef: Ref<HTMLDivElement | null> = ref(null)
 const showCommentWindow = ref(false)
+const commentLocationId = ref<number | null>(null)
 
 async function scrollToBottom() {
     await nextTick()
@@ -62,11 +65,37 @@ async function onUpdateStatus(id: number ,status: 2 | 3 | 4){
             toast.error("操作失败: " + resp.data.message)
             return
         }
+
+        if (status === 3) {
+            const dinner = currentDinners.value.find(d => d.id === id)
+            commentLocationId.value = dinner?.location?.id ?? null
+            showCommentWindow.value = true
+        }
     }catch (e){
         toast.error("操作失败: 服务器错误")
     }
 
     await refreshDinners()
+}
+
+async function onSubmitComment(form: any){
+    form = form as MapCommentForm
+    if (!commentLocationId.value) return
+    try {
+        const resp = await api.map.locationIdCommentsCreate(commentLocationId.value, {
+            content: form.content,
+            rating: form.rank,
+            dinnerId: selectedId.value ?? 0
+        })
+        if (resp.data.code !== 20000) {
+            toast.error("提交评论失败: " + resp.data.message)
+            return
+        }
+        toast.success("评论提交成功!")
+        showCommentWindow.value = false
+    }catch (e){
+        toast.error("提交评论失败: 服务器错误")
+    }
 }
 
 async function refreshDinners(){
@@ -239,11 +268,53 @@ onMounted(async () => {
         </AnimateIcon>
     </button>
 
-    <div>
-        
-    </div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/4 h-2/3 flex flex-col bg-white shadow-2xl border border-gray-200 rounded-2xl px-4 py-4">
-        <span class="text-lg font-bold">提交评论</span>
-    </div>
+    <AnimatePresence>
+        <Motion
+            v-if="showCommentWindow"
+            as="div"
+            :initial="{ opacity: 0, scale: 0.9, y: 20 }"
+            :animate="{ opacity: 1, scale: 1, y: 0 }"
+            :exit="{ opacity: 0, scale: 0.9, y: 20 }"
+            :transition="{ type: 'spring', stiffness: 300, damping: 30 }"
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 flex flex-col bg-white shadow-2xl border border-gray-200 rounded-2xl px-6 py-5 z-100"
+        >
+            <div class="flex items-center justify-between">
+                <span class="text-lg font-bold">提交评论</span>
+                <button class="text-gray-400 hover:text-gray-600" @click="showCommentWindow = false">✕</button>
+            </div>
+
+            <Form
+                :validation-schema="mapCommentSchema"
+                @submit="onSubmitComment"
+                class="flex flex-col space-y-3 mt-3"
+            >
+                <div class="flex flex-col space-y-1">
+                    <label class="text-sm">评分</label>
+                    <Field name="rank" v-slot="{ field }">
+                        <div class="flex items-center space-x-1">
+                            <Star
+                                v-for="n in 5"
+                                :key="n"
+                                :size="28"
+                                class="cursor-pointer"
+                                @click="field.onChange(n)"
+                                :class="n <= (field.value ?? 0) ? 'text-yellow-400' : 'text-gray-300'"
+                                :fill="n <= (field.value ?? 0) ? 'currentColor' : 'none'"
+                            />
+                        </div>
+                    </Field>
+                    <ErrorMessage name="rank" class="text-sm text-red-600"/>
+                </div>
+
+                <div class="flex flex-col space-y-1">
+                    <label for="content" class="text-sm">评价</label>
+                    <Field name="content" id="content" as="textarea" class="rounded-lg w-full h-30 border border-gray-200 px-3 py-2 outline-none focus:border-b-blue-300 transition-colors" placeholder="说说这次的体验吧"/>
+                    <ErrorMessage name="content" class="text-sm text-red-600"/>
+                </div>
+
+                <button type="submit" class="rounded-lg w-full border border-gray-200 px-3 py-2 outline-none focus:border-b-blue-400 hover:bg-blue-400 hover:text-white transition-colors">提交</button>
+            </Form>
+        </Motion>
+    </AnimatePresence>
     </div>
 </template>
