@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "openapi": "swagger-typescript-api generate -p C:\\Users\\linst\\Projects\\ricerise-backend\\docs\\swagger.json -o ./src/api -n api --axios"
+    "openapi": "swagger-typescript-api generate -p C:\\Users\\linstarowo\\GolandProjects\\ricerise-backend\\docs\\swagger.json -o ./src/api -n api --axios"
   },
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",

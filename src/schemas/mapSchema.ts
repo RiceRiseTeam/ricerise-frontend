@@ -16,4 +16,4 @@ export const mapCommentSchema = z.object({
 })
 
 export type MapUploadForm = z.infer<typeof mapUploadSchema>;
-export type MapCommentSchema = z.infer<typeof mapCommentSchema>
+export type MapCommentForm = z.infer<typeof mapCommentSchema>
