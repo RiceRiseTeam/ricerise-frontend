@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import {AnimatePresence, Motion} from "motion-v";
-import {computed, nextTick, onMounted, type Ref, ref} from "vue";
-import {userStorage} from "@/store/auth";
+import {computed, nextTick, onBeforeUnmount, onMounted, reactive, type Ref, ref, watch} from "vue";
+import {tokenStorage, userStorage} from "@/store/auth";
 import {RouterLink} from "vue-router"
+import {fetchEventSource} from "@microsoft/fetch-event-source";
+import api from "@/api/http";
+import {useToast} from "@/composables/message";
 
 interface Command {
     name: string
@@ -14,25 +17,26 @@ interface Message {
     content: string
 }
 
+interface AgentEvent {
+    sessionId: number
+    type: string
+    message: string
+}
+
+const toast = useToast()
+
 const text = ref('')
 const showPanel = ref(false)
 const activeIndex = ref(0)
 const textareaRef = ref<HTMLTextAreaElement>()
+const scrollRef = ref<HTMLDivElement | null>(null)
 const messages: Ref<Message[]> = ref([])
-
-messages.value.push({
-    role: "user",
-    content: "你好"
-}, {
-    role: "agent",
-    content: "你也好"
-})
+const sessionId = ref<number | null>(null)
+const isStreaming = ref(false)
+let streamController: AbortController | null = null
 
 const commands: Command[] = [
-    { name: "/chat",    description: "和大肥鱼聊天" },
-    { name: "/search",   description: "搜索饭点" },
     { name: "/rest",   description: "重置大肥鱼上下文" },
-    { name: "/schp",    description: "搜索匹配的参与者" },
 ]
 
 const commandKeyword = computed(() => {
@@ -70,8 +74,130 @@ async function selectCommand(command: Command) {
     textareaRef.value?.focus()
 }
 
-onMounted(() => {
+async function scrollToBottom() {
+    await nextTick()
+    const el = scrollRef.value
+    if (el) el.scrollTop = el.scrollHeight
+}
+
+watch(messages, scrollToBottom, {deep: true})
+
+async function handleEnter() {
+    if (showPanel.value && filteredCommands.value.length > 0) {
+        await selectCommand(filteredCommands.value[activeIndex.value]!)
+        return
+    }
+    await sendMessage()
+}
+
+async function newSession() {
+    try {
+        const resp = await api.chat.sessionList()
+        if (resp.data.code !== 0) {
+            toast.error("获取会话失败: " + resp.data.message)
+            return
+        }
+        sessionId.value = resp.data.data?.session_id ?? null
+    } catch (e) {
+        toast.error("获取会话失败: 服务器错误")
+    }
+}
+
+async function sendMessage() {
+    if (isStreaming.value) return
+    const content = text.value.trim()
+    if (!content) return
+
+    text.value = ""
+    showPanel.value = false
+
+    if (content === "/rest") {
+        messages.value = []
+        await newSession()
+        return
+    }
+
+    if (sessionId.value === null) {
+        toast.error("会话尚未就绪")
+        return
+    }
+
+    const currentSessionId = sessionId.value
+    messages.value.push({ role: "user", content })
+
+    const agentMessage = reactive<Message>({ role: "agent", content: "" })
+    messages.value.push(agentMessage)
+    isStreaming.value = true
+
+    streamController?.abort()
+    const controller = new AbortController()
+    streamController = controller
+
+    try {
+        await fetchEventSource(`/api/v1/chat/${currentSessionId}/stream`, {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${tokenStorage.getAccessToken()}` },
+            signal: controller.signal,
+            openWhenHidden: true,
+            async onopen(response) {
+                if (!response.ok) {
+                    throw new Error(`SSE 连接失败: ${response.status}`)
+                }
+                const resp = await api.chat.idMessagesCreate(currentSessionId, { input: content })
+                if (resp.data.code !== 0) {
+                    toast.error("发送失败: " + resp.data.message)
+                }
+            },
+            onmessage(msg) {
+                if (msg.event !== "agent") return
+                let event: AgentEvent
+                try {
+                    event = JSON.parse(msg.data)
+                } catch (e) {
+                    return
+                }
+                if (event.type === "text") {
+                    agentMessage.content += event.message
+                } else if (event.type === "error") {
+                    toast.error(event.message)
+                    agentMessage.content += (agentMessage.content ? "\n" : "") + event.message
+                } else if (event.type === "done") {
+                    controller.abort()
+                }
+            },
+            onclose() {
+                // 服务器在 agent 完成本次流式响应后主动关闭连接
+            },
+            onerror(err) {
+                throw err
+            }
+        })
+    } catch (e) {
+        if (!controller.signal.aborted) {
+            toast.error("对话失败: 服务器错误")
+        }
+    } finally {
+        if (streamController === controller) {
+            streamController = null
+        }
+        isStreaming.value = false
+        if (!agentMessage.content) {
+            const idx = messages.value.indexOf(agentMessage)
+            if (idx !== -1) messages.value.splice(idx, 1)
+        }
+    }
+}
+
+onMounted(async () => {
     isLogin.value = userStorage.getCurrentUser() !== null
+    if (isLogin.value) {
+        await newSession()
+    }
+})
+
+onBeforeUnmount(() => {
+    streamController?.abort()
+    streamController = null
 })
 </script>
 
@@ -81,14 +207,15 @@ onMounted(() => {
         :animate="{ y: 0, opacity: 1 }"
         :transition="{ duration: 0.5, type: 'spring' }"
     >
-        <div class="absolute bottom-22 left-1/2 -translate-x-1/2 w-170 flex flex-col">
+        <div ref="scrollRef" class="absolute bottom-22 left-1/2 -translate-x-1/2 w-170 flex flex-col space-y-1 max-h-100 overflow-y-auto no-scrollbar">
             <AnimatePresence>
                 <Motion
-                    v-for="message in messages"
+                    v-for="(message, index) in messages"
+                    :key="index"
                     :initial="{ y: 20, opacity: 0 }"
                     :animate="{ y: 0, opacity: 1 }"
                     :transition="{ duration: 0.1, type: 'spring' }"
-                    class="bg-white/85 backdrop-blur-sm border border-gray-200 shadow rounded-2xl flex flex-col px-2 py-1 min-w-30"
+                    class="bg-white/85 backdrop-blur-sm border border-gray-200 shadow rounded-2xl flex flex-col px-2 py-1 min-w-30 max-w-140 break-words"
                     :class="[message.role === 'user' ? 'ml-auto' : 'mr-auto']"
                 >
                     <span class="text-sm text-gray-500">{{ message.role }}</span>
@@ -139,7 +266,20 @@ onMounted(() => {
                 ref="textareaRef"
                 v-model="text"
                 @input="handleInput"
-                class="flex-1 border-none outline-none h-full field-sizing-content max-h-40" placeholder="给吃白饭的大肥鱼发送消息... "/>
+                @keydown.enter.exact.prevent="handleEnter"
+                :disabled="!isLogin"
+                class="flex-1 border-none outline-none h-full field-sizing-content max-h-40 bg-transparent disabled:cursor-not-allowed" placeholder="给吃白饭的大肥鱼发送消息... "/>
         </nav>
     </Motion>
 </template>
+
+<style scoped>
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+</style>

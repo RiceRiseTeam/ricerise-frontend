@@ -114,7 +114,7 @@ defineExpose({
             <span class="text-sm text-gray-500 mt--2" >{{ currentLocation?.address}}</span>
             <hr class="border-gray-300 shadow">
             <span class="text-xs text-gray-400">Desc: </span>
-            <span class="min-h-40 max-h-40 px-1 text-sm">{{ currentLocation?.description }}</span>
+            <span class="min-h-40 max-h-80 px-1 text-sm">{{ currentLocation?.description }}</span>
             <hr class="border-gray-300 shadow">
 
             <div class="flex flex-col w-full h-full items-center overflow-y-auto overscroll-contain" ref="commentsContainer" @scroll="onCommentsScroll">
