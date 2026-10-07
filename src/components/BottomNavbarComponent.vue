@@ -104,7 +104,6 @@ async function newSession() {
 }
 
 async function sendMessage() {
-    if (isStreaming.value) return
     const content = text.value.trim()
     if (!content) return
 
@@ -112,6 +111,9 @@ async function sendMessage() {
     showPanel.value = false
 
     if (content === "/rest") {
+        streamController?.abort()
+        streamController = null
+        isStreaming.value = false
         messages.value = []
         await newSession()
         return
@@ -122,6 +124,8 @@ async function sendMessage() {
         return
     }
 
+    streamController?.abort()
+
     const currentSessionId = sessionId.value
     messages.value.push({ role: "user", content })
 
@@ -129,7 +133,6 @@ async function sendMessage() {
     messages.value.push(agentMessage)
     isStreaming.value = true
 
-    streamController?.abort()
     const controller = new AbortController()
     streamController = controller
 
@@ -177,13 +180,13 @@ async function sendMessage() {
             toast.error("对话失败: 服务器错误")
         }
     } finally {
-        if (streamController === controller) {
-            streamController = null
-        }
-        isStreaming.value = false
         if (!agentMessage.content) {
             const idx = messages.value.indexOf(agentMessage)
             if (idx !== -1) messages.value.splice(idx, 1)
+        }
+        if (streamController === controller) {
+            streamController = null
+            isStreaming.value = false
         }
     }
 }
